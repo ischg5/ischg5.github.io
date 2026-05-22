@@ -637,6 +637,18 @@
         });
       });
 
+      viewContainer.querySelectorAll('[data-field="partName"]').forEach(input => {
+        input.addEventListener('input', e => {
+          const partId = e.target.dataset.partId;
+          const part = config.gameParts.find(p => p.id === partId);
+          if (part) {
+          part.name = e.target.value;
+          debouncedSave();
+          }
+        });
+      });
+      
+
       // 其他按钮字段绑定 (保持不变)
       const bindButtonInput = (selector, array, nameField, urlField, bgField) => {
         viewContainer.querySelectorAll(selector).forEach(input => {
