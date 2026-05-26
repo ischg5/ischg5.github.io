@@ -100,13 +100,12 @@
   (function(){
     "use strict";
 
-    // Supabase 配置
-    const SUPABASE_URL = 'https://igsfqnnwuirvhhrczlsw.supabase.co/rest/v1/';  // 替换 API URL
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlnc2Zxbm53dWlydmhocmN6bHN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3ODA2MDUsImV4cCI6MjA5NTM1NjYwNX0.D1ic8LzNB2zhW21Bp0iscF-MBuztnG6LvICFbbtOXLE'; // 替换 anon public key
-    const BIN_URL = `${Shttps://igsfqnnwuirvhhrczlsw.supabase.co}/rest/v1/config`;
-    const ACCESS_KEY = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlnc2Zxbm53dWlydmhocmN6bHN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3ODA2MDUsImV4cCI6MjA5NTM1NjYwNX0.D1ic8LzNB2zhW21Bp0iscF-MBuztnG6LvICFbbtOXLE;
-
-    const DEFAULT_CONFIG = {
+     // Supabase 配置
+      const SUPABASE_URL = 'https://igsfqnnwuirvhhrczlsw.supabase.co';
+      const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlnc2Zxbm53dWlydmhocmN6bHN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3ODA2MDUsImV4cCI6MjA5NTM1NjYwNX0.D1ic8LzNB2zhW21Bp0iscF-MBuztnG6LvICFbbtOXLE';
+      const BIN_URL = `${SUPABASE_URL}/rest/v1/config`;
+      const ACCESS_KEY = SUPABASE_KEY;
+      const DEFAULT_CONFIG = {
       settingPassword: "9014",
       aiTalkUrl: "https://weixin.qq.com/",
       classInUrl: "https://www.classin.com/",
@@ -220,26 +219,26 @@
       try {
         if (showSuccess) showSnackbar('☁️ Loading Cloud Config...');
         const response = await fetch(`${BIN_URL}?id=eq.1`, {
-          headers: {
+        headers: {
           'apikey': ACCESS_KEY,
           'Authorization': `Bearer ${ACCESS_KEY}`
-          }
-        });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const data = await response.json();
-        config = { ...DEFAULT_CONFIG, ...data[0].data };  // Supabase 返回数组，数据在 record.data 中
-        normalizeConfig(config);
-        configSource = 'cloud';
-        localStorage.setItem('english_integrated_config', JSON.stringify(config));
-        if (showSuccess) showSnackbar('✅ Load Success');
-        renderCurrentView();
-        return true;
-      } catch (error) {
-        console.warn('Load Failed', error);
-        if (showSuccess) showSnackbar('⚠️ Cloud connect failed, use local cache', true);
-        return false;
-      }
+        }
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      config = { ...DEFAULT_CONFIG, ...data[0].data };  // Supabase 返回数组，数据在 data 字段中
+      normalizeConfig(config);
+      configSource = 'cloud';
+      localStorage.setItem('english_integrated_config', JSON.stringify(config));
+      if (showSuccess) showSnackbar('✅ Load Success');
+      renderCurrentView();
+      return true;
+    } catch (error) {
+      console.warn('Load Failed', error);
+      if (showSuccess) showSnackbar('⚠️ Cloud connect failed, use local cache', true);
+      return false;
     }
+  }
 
     function loadConfigFromStorage() {
       const stored = localStorage.getItem('english_integrated_config');
@@ -270,26 +269,28 @@
       saveTimer = setTimeout(() => saveConfigToStorage(false), 300);
     }
 
-    async function publishToCloud() {
-      if (!settingAuthenticated) { showSnackbar('Please access the Settings page first', true); return; }
+    async function loadConfigFromCloud(showSuccess = true) {
       try {
-        showSnackbar('☁️ Uploading to cloud...');
+        if (showSuccess) showSnackbar('☁️ Loading Cloud Config...');
         const response = await fetch(`${BIN_URL}?id=eq.1`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': ACCESS_KEY,
-            'Prefer': 'return=representation'
-          },
-          body: JSON.stringify({ data: config })
-        });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        configSource = 'cloud';
-        localStorage.setItem('english_integrated_config', JSON.stringify(config));
-        showSnackbar('🎉 Published succeeded！Tap top‑right corner ☁️ to update');
+        headers: {
+          'apikey': ACCESS_KEY,
+           'Authorization': `Bearer ${ACCESS_KEY}`
+        }
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      config = { ...DEFAULT_CONFIG, ...data[0].data };  // Supabase 返回数组，数据在 data 字段中
+      normalizeConfig(config);
+      configSource = 'cloud';
+      localStorage.setItem('english_integrated_config', JSON.stringify(config));
+      if (showSuccess) showSnackbar('✅ Load Success');
+      renderCurrentView();
+      return true;
       } catch (error) {
-        console.error('Failed to publish', error);
-        showSnackbar('❌ Publish Failed. Please check network or bin access', true);
+        console.warn('Load Failed', error);
+        if (showSuccess) showSnackbar('⚠️ Cloud connect failed, use local cache', true);
+        return false;
       }
     }
 
