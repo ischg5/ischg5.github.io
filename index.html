@@ -100,9 +100,12 @@
   (function(){
     "use strict";
 
-    const BIN_ID = '6a0e6cea6877513b27a83342';
-    const ACCESS_KEY = '$2a$10$.DLNMVy3yVBJw9ZGs7.zyu3ExZrnZqOtovA2l4cXYo8MwN2v23oVe';
-    const BIN_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
+    // Supabase 配置
+    const SUPABASE_URL = 'https://igsfqnnwuirvhhrczlsw.supabase.co/rest/v1/';  // 替换 API URL
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlnc2Zxbm53dWlydmhocmN6bHN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3ODA2MDUsImV4cCI6MjA5NTM1NjYwNX0.D1ic8LzNB2zhW21Bp0iscF-MBuztnG6LvICFbbtOXLE';                         // 替换 anon public key
+
+    const BIN_URL = `${SUPABASE_URL}/rest/v1/config`;
+    const ACCESS_KEY = SUPABASE_KEY;
 
     const DEFAULT_CONFIG = {
       settingPassword: "9014",
@@ -220,7 +223,7 @@
         const response = await fetch(`${BIN_URL}/latest`, { headers: { 'X-Access-Key': ACCESS_KEY } });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
-        config = { ...DEFAULT_CONFIG, ...data.record };
+        config = { ...DEFAULT_CONFIG, ...data[0].data };  // Supabase 返回数组，数据在 record.data 中
         normalizeConfig(config);
         configSource = 'cloud';
         localStorage.setItem('english_integrated_config', JSON.stringify(config));
@@ -267,10 +270,14 @@
       if (!settingAuthenticated) { showSnackbar('Please access the Settings page first', true); return; }
       try {
         showSnackbar('☁️ Uploading to cloud...');
-        const response = await fetch(BIN_URL, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json', 'X-Access-Key': ACCESS_KEY },
-          body: JSON.stringify(config)
+        const response = await fetch(`${BIN_URL}?id=eq.1`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': ACCESS_KEY,
+            'Prefer': 'return=representation'
+          },
+          body: JSON.stringify({ data: config })
         });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         configSource = 'cloud';
