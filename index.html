@@ -615,197 +615,236 @@
         body: `<div class="input-group"><label>Set Password</label><input type="text" id="settingPwd" value="${config.settingPassword}"></div>`
       });
 
-      const bgFields = [
-        { key: 'homeBgUrl', label: 'Home Page Background', id: 'homeBgUrl' },
-        { key: 'gamePageBgUrl', label: 'Game Page Background', id: 'gamePageBgUrl' },
-        { key: 'rolePlayPageBgUrl', label: 'Role Play AI Page Background', id: 'rolePlayPageBgUrl' },
-      ];
-      const bgHtml = bgFields.map(f => `<div class="input-group"><label>${f.label}</label><input type="text" id="${f.id}" value="${config[f.key] || ''}"></div>`).join('');
-      sections.push({ title: '<i class="fas fa-image"></i> Page Backgrounds', id: 'pageBackgrounds', body: `<p style="margin-bottom:16px;">Enter image URL (leave empty for default).</p>${bgHtml}` });
+  // 页面背景（使用上传控件）
+  const bgFields = [
+    { key: 'homeBgUrl', label: 'Home Page Background', id: 'homeBgUrl' },
+    { key: 'gamePageBgUrl', label: 'Game Page Background', id: 'gamePageBgUrl' },
+    { key: 'rolePlayPageBgUrl', label: 'Role Play AI Page Background', id: 'rolePlayPageBgUrl' },
+  ];
+  const bgHtml = bgFields.map(f => `
+    <div class="input-group">
+      <label>${f.label}</label>
+      <div class="bg-upload-wrap" data-field-key="${f.key}">
+        <input type="text" class="image-url-input" id="${f.id}" value="${config[f.key] || ''}" readonly>
+        <button class="btn-outline image-upload-btn" type="button"><i class="fas fa-upload"></i></button>
+        <button class="btn-outline image-delete-btn" type="button"><i class="fas fa-trash"></i></button>
+      </div>
+    </div>
+  `).join('');
+  sections.push({ title: '<i class="fas fa-image"></i> Page Backgrounds', id: 'pageBackgrounds', body: `<p style="margin-bottom:16px;">Upload or enter image URL. Upload will overwrite the same file name.</p>${bgHtml}` });
 
-      const btnBgFields = [
-        { key: 'btnGameBgUrl', label: 'Game Button Background', id: 'btnGameBgUrl' },
-        { key: 'btnRolePlayBgUrl', label: 'Role-Play Button Background', id: 'btnRolePlayBgUrl' },
-        { key: 'btnClassInBgUrl', label: 'Class In Button Background', id: 'btnClassInBgUrl' },
-        { key: 'btnAITalkBgUrl', label: 'AI Talk Button Background', id: 'btnAITalkBgUrl' },
-      ];
-      const btnBgHtml = btnBgFields.map(f => `<div class="input-group"><label>${f.label}</label><input type="text" id="${f.id}" value="${config[f.key] || ''}"></div>`).join('');
-      sections.push({ title: '<i class="fas fa-th-large"></i> Button Backgrounds', id: 'buttonBackgrounds', body: `<p style="margin-bottom:16px;">Custom backgrounds for the four main buttons.</p>${btnBgHtml}` });
+  // 按钮背景
+  const btnBgFields = [
+    { key: 'btnGameBgUrl', label: 'Game Button Background', id: 'btnGameBgUrl' },
+    { key: 'btnRolePlayBgUrl', label: 'Role-Play Button Background', id: 'btnRolePlayBgUrl' },
+    { key: 'btnClassInBgUrl', label: 'Class In Button Background', id: 'btnClassInBgUrl' },
+    { key: 'btnAITalkBgUrl', label: 'AI Talk Button Background', id: 'btnAITalkBgUrl' },
+  ];
+  const btnBgHtml = btnBgFields.map(f => `
+    <div class="input-group">
+      <label>${f.label}</label>
+      <div class="bg-upload-wrap" data-field-key="${f.key}">
+        <input type="text" class="image-url-input" id="${f.id}" value="${config[f.key] || ''}" readonly>
+        <button class="btn-outline image-upload-btn" type="button"><i class="fas fa-upload"></i></button>
+        <button class="btn-outline image-delete-btn" type="button"><i class="fas fa-trash"></i></button>
+      </div>
+    </div>
+  `).join('');
+  sections.push({ title: '<i class="fas fa-th-large"></i> Button Backgrounds', id: 'buttonBackgrounds', body: `<p style="margin-bottom:16px;">Custom backgrounds for the four main buttons.</p>${btnBgHtml}` });
 
-      let aiTalkHtml = '';
-      (config.aiTalkButtons || []).forEach((btn, idx) => {
-        aiTalkHtml += `
-          <div class="aitalk-editor-item">
-            <div class="flex-row" style="justify-content:space-between;">
-              <strong><i class="fas fa-link"></i> Role Play AI ${idx+1}</strong>
-              <button class="btn-icon" data-action="deleteAiTalk" data-btn-id="${btn.id}"><i class="fas fa-trash"></i></button>
-            </div>
-            <div class="input-group"><label>Rename</label><input type="text" data-field="aiTalkName" data-btn-id="${btn.id}" value="${btn.name.replace(/"/g, '&quot;')}"></div>
-            <div class="input-group"><label>Input Link</label><input type="text" data-field="aiTalkUrl" data-btn-id="${btn.id}" value="${btn.url.replace(/"/g, '&quot;')}"></div>
-            <div class="input-group"><label>Background Image</label><input type="text" data-field="aiTalkBgUrl" data-btn-id="${btn.id}" value="${btn.bgUrl || ''}"></div>
-          </div>`;
-      });
-      sections.push({ title: '<i class="fas fa-comment-dots"></i> Role Play AI Management', id: 'aiTalkManagement', body: `<p style="margin-bottom:16px;">Add or remove Role Play AI buttons.</p>${aiTalkHtml}<button class="btn-outline" data-action="addAiTalk"><i class="fas fa-plus-circle"></i> Add Role Play AI</button>` });
-
-      let classInHtml = '';
-      (config.classInButtons || []).forEach((btn, idx) => {
-        classInHtml += `
-          <div class="aitalk-editor-item">
-            <div class="flex-row" style="justify-content:space-between;">
-              <strong><i class="fas fa-link"></i> ClassIn ${idx+1}</strong>
-              <button class="btn-icon" data-action="deleteClassIn" data-btn-id="${btn.id}"><i class="fas fa-trash"></i></button>
-            </div>
-            <div class="input-group"><label>Rename</label><input type="text" data-field="classInName" data-btn-id="${btn.id}" value="${btn.name.replace(/"/g, '&quot;')}"></div>
-            <div class="input-group"><label>Input Link</label><input type="text" data-field="classInUrl" data-btn-id="${btn.id}" value="${btn.url.replace(/"/g, '&quot;')}"></div>
-            <div class="input-group"><label>Background Image</label><input type="text" data-field="classInBgUrl" data-btn-id="${btn.id}" value="${btn.bgUrl || ''}"></div>
-          </div>`;
-      });
-      sections.push({ title: '<i class="fas fa-chalkboard-teacher"></i> ClassIn Management', id: 'classInManagement', body: `<p style="margin-bottom:16px;">Add or remove ClassIn links.</p>${classInHtml}<button class="btn-outline" data-action="addClassIn"><i class="fas fa-plus-circle"></i> Add ClassIn Button</button>` });
-
-      let discussionHtml = '';
-      (config.discussionButtons || []).forEach((btn, idx) => {
-        discussionHtml += `
-          <div class="aitalk-editor-item">
-            <div class="flex-row" style="justify-content:space-between;">
-              <strong><i class="fas fa-link"></i> AI Talk ${idx+1}</strong>
-              <button class="btn-icon" data-action="deleteDiscussion" data-btn-id="${btn.id}"><i class="fas fa-trash"></i></button>
-            </div>
-            <div class="input-group"><label>Rename</label><input type="text" data-field="discussionName" data-btn-id="${btn.id}" value="${btn.name.replace(/"/g, '&quot;')}"></div>
-            <div class="input-group"><label>Input Link</label><input type="text" data-field="discussionUrl" data-btn-id="${btn.id}" value="${btn.url.replace(/"/g, '&quot;')}"></div>
-            <div class="input-group"><label>Background Image</label><input type="text" data-field="discussionBgUrl" data-btn-id="${btn.id}" value="${btn.bgUrl || ''}"></div>
-          </div>`;
-      });
-      sections.push({ title: '<i class="fas fa-comments"></i> AI Talk Management', id: 'discussionManagement', body: `<p style="margin-bottom:16px;">Add or remove AI Talk links.</p>${discussionHtml}<button class="btn-outline" data-action="addDiscussion"><i class="fas fa-plus-circle"></i> Add AI Talk Button</button>` });
-
-      let partsHtml = '';
-      config.gameParts.forEach(part => {
-        let gamesHtml = '';
-        (part.games||[]).forEach(game => {
-          gamesHtml += `<div class="game-editor-item">
-            <div class="flex-row"><strong>${game.name}</strong><button class="btn-icon" data-action="deleteGame" data-part-id="${part.id}" data-game-id="${game.id}"><i class="fas fa-trash"></i></button></div>
-            <div class="input-group"><label>Game ID</label><input type="text" data-part-id="${part.id}" data-game-id="${game.id}" data-field="gameName" value="${game.name.replace(/"/g, '&quot;')}"></div>
-            <div class="input-group"><label>Embed Code</label><textarea rows="3" data-part-id="${part.id}" data-game-id="${game.id}" data-field="embedCode">${game.embedCode.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</textarea></div>
-            <div class="input-group"><label>Background Image</label><input type="text" data-part-id="${part.id}" data-game-id="${game.id}" data-field="gameBgUrl" value="${game.bgUrl || ''}"></div>
-          </div>`;
-        });
-        partsHtml += `<div class="part-editor">
-          <div class="flex-row"><h3>${part.name}</h3><div><button class="btn-icon" data-action="renamePart" data-part-id="${part.id}"><i class="fas fa-pen"></i></button><button class="btn-icon" data-action="deletePart" data-part-id="${part.id}"><i class="fas fa-trash-alt"></i></button></div></div>
-          <div class="input-group"><label>Part Title</label><input type="text" data-part-id="${part.id}" data-field="partName" value="${part.name}"></div>
-          ${gamesHtml}
-          <button class="btn-outline" data-action="addGame" data-part-id="${part.id}"><i class="fas fa-plus"></i> Add Game</button>
-        </div>`;
-      });
-      sections.push({ title: '<i class="fas fa-layer-group"></i> Game Management', id: 'gameManagement', body: `${partsHtml}<div class="flex-row" style="margin-top:20px"><button class="btn-primary" data-action="addPart"><i class="fas fa-plus"></i> Create New Part</button><button class="btn-outline" data-action="resetDefault"><i class="fas fa-undo-alt"></i> Reset Default</button></div>` });
-
-      sections.push({ title: '<i class="fas fa-cloud-upload-alt"></i> Publish to Cloud', id: 'publishCloud', body: `<p style="margin-bottom:16px;">Click the button below to publish.</p><button class="btn-primary" data-action="publishToCloud"><i class="fas fa-cloud-upload-alt"></i> One-Click Publish</button><hr style="margin: 24px 0; border: none; border-top: 1px solid #ddd;"><div class="flex-row"><button class="btn-outline" data-action="exportConfig"><i class="fas fa-download"></i> Export JSON</button><label class="btn-outline" for="importFileInput" style="cursor:pointer;"><i class="fas fa-upload"></i> Import JSON</label><input type="file" id="importFileInput" accept=".json,application/json" style="display:none;"></div>` });
-
-      const sectionsHtml = sections.map(s => `
-        <div class="setting-section" data-section-id="${s.id}">
-          <div class="section-header collapsed" data-action="toggleSection">
-            <div class="setting-title">${s.title}</div>
-            <i class="fas fa-chevron-down"></i>
-          </div>
-          <div class="section-body hidden">${s.body}</div>
+  // Role Play AI
+  let aiTalkHtml = '';
+  (config.aiTalkButtons || []).forEach((btn, idx) => {
+    aiTalkHtml += `
+      <div class="aitalk-editor-item">
+        <div class="flex-row" style="justify-content:space-between;">
+          <strong><i class="fas fa-link"></i> Role Play AI ${idx+1}</strong>
+          <button class="btn-icon" data-action="deleteAiTalk" data-btn-id="${btn.id}"><i class="fas fa-trash"></i></button>
         </div>
-      `).join('');
+        <div class="input-group"><label>Rename</label><input type="text" data-field="aiTalkName" data-btn-id="${btn.id}" value="${btn.name.replace(/"/g, '&quot;')}"></div>
+        <div class="input-group"><label>Input Link</label><input type="text" data-field="aiTalkUrl" data-btn-id="${btn.id}" value="${btn.url.replace(/"/g, '&quot;')}"></div>
+        <div class="input-group">
+          <label>Background Image</label>
+          <div class="bg-upload-wrap" data-field-key="aitalkBtnBg" data-dynamic-id="${btn.id}">
+            <input type="text" class="image-url-input" data-field="aiTalkBgUrl" data-btn-id="${btn.id}" value="${btn.bgUrl || ''}" readonly>
+            <button class="btn-outline image-upload-btn" type="button"><i class="fas fa-upload"></i></button>
+            <button class="btn-outline image-delete-btn" type="button"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+      </div>`;
+  });
+  sections.push({ title: '<i class="fas fa-comment-dots"></i> Role Play AI Management', id: 'aiTalkManagement', body: `<p style="margin-bottom:16px;">Add or remove Role Play AI buttons.</p>${aiTalkHtml}<button class="btn-outline" data-action="addAiTalk"><i class="fas fa-plus-circle"></i> Add Role Play AI</button>` });
 
-      viewContainer.innerHTML = `<div style="width:100%;"><div class="config-source-badge"><i class="fas fa-database"></i> Settings from：${sourceText}</div>${sectionsHtml}<div class="flex-row" style="justify-content:flex-end;"><button class="btn-primary" data-action="logoutSetting">Exit Settings</button></div></div>`;
+  // ClassIn
+  let classInHtml = '';
+  (config.classInButtons || []).forEach((btn, idx) => {
+    classInHtml += `
+      <div class="aitalk-editor-item">
+        <div class="flex-row" style="justify-content:space-between;">
+          <strong><i class="fas fa-link"></i> ClassIn ${idx+1}</strong>
+          <button class="btn-icon" data-action="deleteClassIn" data-btn-id="${btn.id}"><i class="fas fa-trash"></i></button>
+        </div>
+        <div class="input-group"><label>Rename</label><input type="text" data-field="classInName" data-btn-id="${btn.id}" value="${btn.name.replace(/"/g, '&quot;')}"></div>
+        <div class="input-group"><label>Input Link</label><input type="text" data-field="classInUrl" data-btn-id="${btn.id}" value="${btn.url.replace(/"/g, '&quot;')}"></div>
+        <div class="input-group">
+          <label>Background Image</label>
+          <div class="bg-upload-wrap" data-field-key="classinBtnBg" data-dynamic-id="${btn.id}">
+            <input type="text" class="image-url-input" data-field="classInBgUrl" data-btn-id="${btn.id}" value="${btn.bgUrl || ''}" readonly>
+            <button class="btn-outline image-upload-btn" type="button"><i class="fas fa-upload"></i></button>
+            <button class="btn-outline image-delete-btn" type="button"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+      </div>`;
+  });
+  sections.push({ title: '<i class="fas fa-chalkboard-teacher"></i> ClassIn Management', id: 'classInManagement', body: `<p style="margin-bottom:16px;">Add or remove ClassIn links.</p>${classInHtml}<button class="btn-outline" data-action="addClassIn"><i class="fas fa-plus-circle"></i> Add ClassIn Button</button>` });
 
-      expandedSections.forEach(id => {
-        const section = document.querySelector(`.setting-section[data-section-id="${id}"]`);
-        if (section) {
-          const header = section.querySelector('.section-header');
-          const body = section.querySelector('.section-body');
-          if (header && body) { header.classList.remove('collapsed'); body.classList.remove('hidden'); }
-        }
-      });
+  // AI Talk
+  let discussionHtml = '';
+  (config.discussionButtons || []).forEach((btn, idx) => {
+    discussionHtml += `
+      <div class="aitalk-editor-item">
+        <div class="flex-row" style="justify-content:space-between;">
+          <strong><i class="fas fa-link"></i> AI Talk ${idx+1}</strong>
+          <button class="btn-icon" data-action="deleteDiscussion" data-btn-id="${btn.id}"><i class="fas fa-trash"></i></button>
+        </div>
+        <div class="input-group"><label>Rename</label><input type="text" data-field="discussionName" data-btn-id="${btn.id}" value="${btn.name.replace(/"/g, '&quot;')}"></div>
+        <div class="input-group"><label>Input Link</label><input type="text" data-field="discussionUrl" data-btn-id="${btn.id}" value="${btn.url.replace(/"/g, '&quot;')}"></div>
+        <div class="input-group">
+          <label>Background Image</label>
+          <div class="bg-upload-wrap" data-field-key="discussionBtnBg" data-dynamic-id="${btn.id}">
+            <input type="text" class="image-url-input" data-field="discussionBgUrl" data-btn-id="${btn.id}" value="${btn.bgUrl || ''}" readonly>
+            <button class="btn-outline image-upload-btn" type="button"><i class="fas fa-upload"></i></button>
+            <button class="btn-outline image-delete-btn" type="button"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+      </div>`;
+  });
+  sections.push({ title: '<i class="fas fa-comments"></i> AI Talk Management', id: 'discussionManagement', body: `<p style="margin-bottom:16px;">Add or remove AI Talk links.</p>${discussionHtml}<button class="btn-outline" data-action="addDiscussion"><i class="fas fa-plus-circle"></i> Add AI Talk Button</button>` });
 
-      const baseInputs = {
-        settingPwd: v => config.settingPassword = v,
-        homeBgUrl: v => config.homeBgUrl = v,
-        gamePageBgUrl: v => config.gamePageBgUrl = v,
-        rolePlayPageBgUrl: v => config.rolePlayPageBgUrl = v,
-        btnGameBgUrl: v => config.btnGameBgUrl = v,
-        btnRolePlayBgUrl: v => config.btnRolePlayBgUrl = v,
-        btnClassInBgUrl: v => config.btnClassInBgUrl = v,
-        btnAITalkBgUrl: v => config.btnAITalkBgUrl = v,
-      };
-      Object.keys(baseInputs).forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.addEventListener('input', e => { baseInputs[id](e.target.value); debouncedSave(); });
-      });
+  // Game Management
+  let partsHtml = '';
+  config.gameParts.forEach(part => {
+    let gamesHtml = '';
+    (part.games||[]).forEach(game => {
+      gamesHtml += `<div class="game-editor-item">
+        <div class="flex-row"><strong>${game.name}</strong><button class="btn-icon" data-action="deleteGame" data-part-id="${part.id}" data-game-id="${game.id}"><i class="fas fa-trash"></i></button></div>
+        <div class="input-group"><label>Game ID</label><input type="text" data-part-id="${part.id}" data-game-id="${game.id}" data-field="gameName" value="${game.name.replace(/"/g, '&quot;')}"></div>
+        <div class="input-group"><label>Embed Code</label><textarea rows="3" data-part-id="${part.id}" data-game-id="${game.id}" data-field="embedCode">${game.embedCode.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</textarea></div>
+        <div class="input-group">
+          <label>Background Image</label>
+          <div class="bg-upload-wrap" data-field-key="gameBtnBg" data-dynamic-id="${game.id}">
+            <input type="text" class="image-url-input" data-part-id="${part.id}" data-game-id="${game.id}" data-field="gameBgUrl" value="${game.bgUrl || ''}" readonly>
+            <button class="btn-outline image-upload-btn" type="button"><i class="fas fa-upload"></i></button>
+            <button class="btn-outline image-delete-btn" type="button"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+      </div>`;
+    });
+    partsHtml += `<div class="part-editor">
+      <div class="flex-row"><h3>${part.name}</h3><div><button class="btn-icon" data-action="renamePart" data-part-id="${part.id}"><i class="fas fa-pen"></i></button><button class="btn-icon" data-action="deletePart" data-part-id="${part.id}"><i class="fas fa-trash-alt"></i></button></div></div>
+      <div class="input-group"><label>Part Title</label><input type="text" data-part-id="${part.id}" data-field="partName" value="${part.name}"></div>
+      ${gamesHtml}
+      <button class="btn-outline" data-action="addGame" data-part-id="${part.id}"><i class="fas fa-plus"></i> Add Game</button>
+    </div>`;
+  });
+  sections.push({ title: '<i class="fas fa-layer-group"></i> Game Management', id: 'gameManagement', body: `${partsHtml}<div class="flex-row" style="margin-top:20px"><button class="btn-primary" data-action="addPart"><i class="fas fa-plus"></i> Create New Part</button><button class="btn-outline" data-action="resetDefault"><i class="fas fa-undo-alt"></i> Reset Default</button></div>` });
 
-      // 修复游戏字段绑定 (Bug 修复)
-      viewContainer.querySelectorAll('[data-field="gameName"], [data-field="embedCode"], [data-field="gameBgUrl"]').forEach(input => {
-        input.addEventListener('input', e => {
-          const partId = e.target.dataset.partId;
-          const gameId = e.target.dataset.gameId;
-          const field = e.target.dataset.field;
-          if (!partId || !gameId) return;
-          const part = config.gameParts.find(p => p.id === partId);
-          if (!part) return;
-          const game = part.games.find(g => g.id === gameId);
-          if (!game) return;
-          if (field === 'gameName') game.name = e.target.value;
-          else if (field === 'embedCode') game.embedCode = e.target.value;
-          else if (field === 'gameBgUrl') game.bgUrl = e.target.value;
-          debouncedSave();
-        });
-      });
+  sections.push({ title: '<i class="fas fa-cloud-upload-alt"></i> Publish to Cloud', id: 'publishCloud', body: `<p style="margin-bottom:16px;">Click the button below to publish.</p><button class="btn-primary" data-action="publishToCloud"><i class="fas fa-cloud-upload-alt"></i> One-Click Publish</button><hr style="margin: 24px 0; border: none; border-top: 1px solid #ddd;"><div class="flex-row"><button class="btn-outline" data-action="exportConfig"><i class="fas fa-download"></i> Export JSON</button><label class="btn-outline" for="importFileInput" style="cursor:pointer;"><i class="fas fa-upload"></i> Import JSON</label><input type="file" id="importFileInput" accept=".json,application/json" style="display:none;"></div>` });
 
-      viewContainer.querySelectorAll('[data-field="partName"]').forEach(input => {
-        input.addEventListener('input', e => {
-          const partId = e.target.dataset.partId;
-          const part = config.gameParts.find(p => p.id === partId);
-          if (part) {
-          part.name = e.target.value;
-          debouncedSave();
-          }
-        });
-      });
-      
+  const sectionsHtml = sections.map(s => `
+    <div class="setting-section" data-section-id="${s.id}">
+      <div class="section-header collapsed" data-action="toggleSection">
+        <div class="setting-title">${s.title}</div>
+        <i class="fas fa-chevron-down"></i>
+      </div>
+      <div class="section-body hidden">${s.body}</div>
+    </div>
+  `).join('');
 
-      // 其他按钮字段绑定 (保持不变)
-      const bindButtonInput = (selector, array, nameField, urlField, bgField) => {
-        viewContainer.querySelectorAll(selector).forEach(input => {
-          input.addEventListener('input', e => {
-            const btnId = e.target.dataset.btnId;
-            const field = e.target.dataset.field;
-            let button = (array || []).find(b => b.id === btnId);
-            if (!button) return;
-            if (field === nameField) button.name = e.target.value;
-            else if (field === urlField) button.url = e.target.value;
-            else if (field === bgField) button.bgUrl = e.target.value;
-            debouncedSave();
-          });
-        });
-      };
+  viewContainer.innerHTML = `<div style="width:100%;"><div class="config-source-badge"><i class="fas fa-database"></i> Settings from：${sourceText}</div>${sectionsHtml}<div class="flex-row" style="justify-content:flex-end;"><button class="btn-primary" data-action="logoutSetting">Exit Settings</button></div></div>`;
 
-      bindButtonInput('[data-field="aiTalkName"], [data-field="aiTalkUrl"], [data-field="aiTalkBgUrl"]', config.aiTalkButtons, 'aiTalkName', 'aiTalkUrl', 'aiTalkBgUrl');
-      bindButtonInput('[data-field="classInName"], [data-field="classInUrl"], [data-field="classInBgUrl"]', config.classInButtons, 'classInName', 'classInUrl', 'classInBgUrl');
-      bindButtonInput('[data-field="discussionName"], [data-field="discussionUrl"], [data-field="discussionBgUrl"]', config.discussionButtons, 'discussionName', 'discussionUrl', 'discussionBgUrl');
+  // 恢复展开的面板
+  expandedSections.forEach(id => {
+    const section = document.querySelector(`.setting-section[data-section-id="${id}"]`);
+    if (section) {
+      const header = section.querySelector('.section-header');
+      const body = section.querySelector('.section-body');
+      if (header && body) { header.classList.remove('collapsed'); body.classList.remove('hidden'); }
     }
+  });
 
-    function renderCurrentView() {
-      if (currentView === 'home') renderHomeView();
-      else if (currentView === 'aitalk') renderAiTalkView();
-      else if (currentView === 'classin') renderClassInView();
-      else if (currentView === 'discussion') renderDiscussionView();
-      else if (currentView === 'game') renderGameView();
-      else if (currentView === 'partDetail') renderPartDetailView();
-      else if (currentView === 'setting') renderSettingView();
-    }
+  // ---------- 初始化图片上传控件 ----------
+  viewContainer.querySelectorAll('.bg-upload-wrap').forEach(wrap => {
+    const fieldKey = wrap.dataset.fieldKey;
+    const dynamicId = wrap.dataset.dynamicId || null;
+    setupImageControls(wrap, fieldKey, dynamicId);
+  });
 
-    backButton.onclick = goBack;
-    cloudRefreshBtn.onclick = () => loadConfigFromCloud(true);
-    settingCornerBtn.onclick = enterSetting;
-    submitPassword.onclick = () => { if(passwordCallback) passwordCallback(passwordInput.value); };
-    cancelPassword.onclick = hidePasswordModal;
-    passwordInput.addEventListener('keypress', e => { if(e.key==='Enter') submitPassword.click(); });
+  // 基础字段保存（密码等）
+  const baseInputs = {
+    settingPwd: v => config.settingPassword = v,
+    homeBgUrl: v => config.homeBgUrl = v,
+    gamePageBgUrl: v => config.gamePageBgUrl = v,
+    rolePlayPageBgUrl: v => config.rolePlayPageBgUrl = v,
+    btnGameBgUrl: v => config.btnGameBgUrl = v,
+    btnRolePlayBgUrl: v => config.btnRolePlayBgUrl = v,
+    btnClassInBgUrl: v => config.btnClassInBgUrl = v,
+    btnAITalkBgUrl: v => config.btnAITalkBgUrl = v,
+  };
+  Object.keys(baseInputs).forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', e => { baseInputs[id](e.target.value); debouncedSave(); });
+  });
 
-    loadConfigFromCloud(true).catch(() => loadConfigFromStorage());
-    setView('home');
-  })();
+  // 游戏字段绑定
+  viewContainer.querySelectorAll('[data-field="gameName"], [data-field="embedCode"], [data-field="gameBgUrl"]').forEach(input => {
+    input.addEventListener('input', e => {
+      const partId = e.target.dataset.partId;
+      const gameId = e.target.dataset.gameId;
+      const field = e.target.dataset.field;
+      if (!partId || !gameId) return;
+      const part = config.gameParts.find(p => p.id === partId);
+      if (!part) return;
+      const game = part.games.find(g => g.id === gameId);
+      if (!game) return;
+      if (field === 'gameName') game.name = e.target.value;
+      else if (field === 'embedCode') game.embedCode = e.target.value;
+      else if (field === 'gameBgUrl') game.bgUrl = e.target.value;
+      debouncedSave();
+    });
+  });
+
+  viewContainer.querySelectorAll('[data-field="partName"]').forEach(input => {
+    input.addEventListener('input', e => {
+      const partId = e.target.dataset.partId;
+      const part = config.gameParts.find(p => p.id === partId);
+      if (part) {
+        part.name = e.target.value;
+        debouncedSave();
+      }
+    });
+  });
+
+  // 其他按钮字段绑定
+  const bindButtonInput = (selector, array, nameField, urlField, bgField) => {
+    viewContainer.querySelectorAll(selector).forEach(input => {
+      input.addEventListener('input', e => {
+        const btnId = e.target.dataset.btnId;
+        const field = e.target.dataset.field;
+        let button = (array || []).find(b => b.id === btnId);
+        if (!button) return;
+        if (field === nameField) button.name = e.target.value;
+        else if (field === urlField) button.url = e.target.value;
+        else if (field === bgField) button.bgUrl = e.target.value;
+        debouncedSave();
+      });
+    });
+  };
+
+  bindButtonInput('[data-field="aiTalkName"], [data-field="aiTalkUrl"], [data-field="aiTalkBgUrl"]', config.aiTalkButtons, 'aiTalkName', 'aiTalkUrl', 'aiTalkBgUrl');
+  bindButtonInput('[data-field="classInName"], [data-field="classInUrl"], [data-field="classInBgUrl"]', config.classInButtons, 'classInName', 'classInUrl', 'classInBgUrl');
+  bindButtonInput('[data-field="discussionName"], [data-field="discussionUrl"], [data-field="discussionBgUrl"]', config.discussionButtons, 'discussionName', 'discussionUrl', 'discussionBgUrl');
+}
 </script>
 </body>
 </html>
