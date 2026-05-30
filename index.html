@@ -77,6 +77,110 @@
     .bg-upload-wrap { display: flex; gap: 8px; align-items: center; }
     .bg-upload-wrap input[type="text"] { flex: 1; }
     .bg-upload-wrap button { white-space: nowrap; }
+
+    /* ========== 浮动机器人按钮 ========== */
+    .robot-fab {
+      position: fixed;
+      bottom: 100px;
+      right: 30px;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: #1e3c72;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.6rem;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+      cursor: grab;
+      z-index: 1000;
+      transition: transform 0.2s;
+      user-select: none;
+    }
+    .robot-fab:active {
+      cursor: grabbing;
+      transform: scale(0.95);
+    }
+    .robot-fab:hover {
+      background: #2a5298;
+    }
+    /* 聊天窗口 */
+    .robot-chat-window {
+      position: fixed;
+      bottom: 170px;
+      right: 30px;
+      width: 360px;
+      height: 480px;
+      background: white;
+      border-radius: 24px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+      display: flex;
+      flex-direction: column;
+      z-index: 999;
+      overflow: hidden;
+      border: 1px solid #dbe4f0;
+    }
+    .robot-chat-window.hidden {
+      display: none;
+    }
+    .robot-chat-header {
+      background: #1e3c72;
+      color: white;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 600;
+    }
+    .robot-chat-messages {
+      flex: 1;
+      padding: 12px;
+      overflow-y: auto;
+      background: #f8fafd;
+    }
+    .robot-chat-messages .msg {
+      margin-bottom: 8px;
+      padding: 8px 12px;
+      border-radius: 16px;
+      max-width: 80%;
+      word-wrap: break-word;
+    }
+    .msg.user {
+      background: #e3efff;
+      align-self: flex-end;
+      margin-left: auto;
+    }
+    .msg.ai {
+      background: white;
+      border: 1px solid #eef4ff;
+    }
+    .robot-chat-input-area {
+      display: flex;
+      padding: 8px;
+      border-top: 1px solid #eee;
+    }
+    .robot-chat-input-area input {
+      flex: 1;
+      border-radius: 20px;
+      border: 1.5px solid #dbe4f0;
+      padding: 10px 14px;
+      font-family: 'Comic Sans MS', 'Comic Neue', cursive;
+    }
+    .robot-chat-input-area button {
+      margin-left: 8px;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    /* 拖拽时禁止选中文本 */
+    body.dragging-fab {
+      user-select: none;
+    }
   </style>
 </head>
 <body>
@@ -88,6 +192,24 @@
   </div>
   <div id="viewContainer" class="view-container"></div>
   <button id="settingCornerBtn" class="setting-corner-btn" title="Setting"><i class="fas fa-cog"></i></button>
+
+  <!-- 浮动机器人按钮 -->
+  <div id="robotFAB" class="robot-fab" title="AI Robot">
+    <i class="fas fa-robot"></i>
+  </div>
+
+  <!-- 聊天窗口（初始隐藏） -->
+  <div id="robotChatWindow" class="robot-chat-window hidden">
+    <div class="robot-chat-header" id="robotChatHeader">
+      <span>🤖 AI Robot</span>
+      <button id="robotChatClose" class="btn-icon"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="robot-chat-messages" id="robotChatMessages"></div>
+    <div class="robot-chat-input-area">
+      <input type="text" id="robotChatInput" placeholder="Ask me anything...">
+      <button id="robotChatSend" class="btn-primary"><i class="fas fa-paper-plane"></i></button>
+    </div>
+  </div>
 </div>
 <div id="passwordModal" class="password-modal hidden">
   <div class="modal-card">
@@ -865,6 +987,150 @@
 
     loadConfigFromCloud(true).catch(() => loadConfigFromStorage());
     setView('home');
+  })();
+
+  // ========== DeepSeek AI 聊天 ==========
+  async function callDeepSeek(userMessage, systemPrompt = 'You are a helpful English teaching assistant for grade 5 students.') {
+    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer sk-4514122bd93c4b62b053cddb667f62a0'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userMessage }
+        ]
+      })
+    });
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    const data = await response.json();
+    return data.choices[0].message.content;
+  }
+
+  // ========== 浮动机器人按钮 & 聊天窗口 ==========
+  (function initRobotChat() {
+    const fab = document.getElementById('robotFAB');
+    const chatWindow = document.getElementById('robotChatWindow');
+    const chatClose = document.getElementById('robotChatClose');
+    const chatMessages = document.getElementById('robotChatMessages');
+    const chatInput = document.getElementById('robotChatInput');
+    const chatSend = document.getElementById('robotChatSend');
+
+    // 点击 FAB 切换聊天窗
+    fab.addEventListener('click', (e) => {
+      // 如果刚刚完成拖拽，不触发 click
+      if (fab.dataset.dragged === 'true') {
+        fab.dataset.dragged = 'false';
+        return;
+      }
+      chatWindow.classList.toggle('hidden');
+    });
+
+    // 关闭按钮
+    chatClose.addEventListener('click', () => {
+      chatWindow.classList.add('hidden');
+    });
+
+    // 发送消息
+    async function sendMessage() {
+      const text = chatInput.value.trim();
+      if (!text) return;
+      addMessage('user', text);
+      chatInput.value = '';
+      try {
+        const reply = await callDeepSeek(text);
+        addMessage('ai', reply);
+      } catch (err) {
+        addMessage('ai', '❌ Failed to get response. Please check your API key or network.');
+      }
+    }
+
+    function addMessage(role, content) {
+      const div = document.createElement('div');
+      div.className = `msg ${role}`;
+      div.textContent = content;
+      chatMessages.appendChild(div);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    chatSend.addEventListener('click', sendMessage);
+    chatInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') sendMessage();
+    });
+
+    // ========== 拖动 FAB ==========
+    let isDragging = false;
+    let startX, startY, initialLeft, initialTop;
+
+    fab.addEventListener('mousedown', (e) => {
+      if (e.target.tagName === 'I') return; // 如果点在图标上，允许拖拽
+      isDragging = true;
+      fab.style.cursor = 'grabbing';
+      document.body.classList.add('dragging-fab');
+      startX = e.clientX;
+      startY = e.clientY;
+      const rect = fab.getBoundingClientRect();
+      initialLeft = rect.left;
+      initialTop = rect.top;
+      e.preventDefault();
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      fab.style.right = 'auto';
+      fab.style.bottom = 'auto';
+      fab.style.left = (initialLeft + dx) + 'px';
+      fab.style.top = (initialTop + dy) + 'px';
+      fab.dataset.dragged = 'true';
+    });
+
+    window.addEventListener('mouseup', () => {
+      if (isDragging) {
+        isDragging = false;
+        fab.style.cursor = 'grab';
+        document.body.classList.remove('dragging-fab');
+        setTimeout(() => { fab.dataset.dragged = 'false'; }, 300);
+      }
+    });
+
+    // 触摸设备支持
+    fab.addEventListener('touchstart', (e) => {
+      isDragging = true;
+      fab.style.cursor = 'grabbing';
+      document.body.classList.add('dragging-fab');
+      const touch = e.touches[0];
+      startX = touch.clientX;
+      startY = touch.clientY;
+      const rect = fab.getBoundingClientRect();
+      initialLeft = rect.left;
+      initialTop = rect.top;
+    });
+
+    window.addEventListener('touchmove', (e) => {
+      if (!isDragging) return;
+      const touch = e.touches[0];
+      const dx = touch.clientX - startX;
+      const dy = touch.clientY - startY;
+      fab.style.right = 'auto';
+      fab.style.bottom = 'auto';
+      fab.style.left = (initialLeft + dx) + 'px';
+      fab.style.top = (initialTop + dy) + 'px';
+      fab.dataset.dragged = 'true';
+    });
+
+    window.addEventListener('touchend', () => {
+      if (isDragging) {
+        isDragging = false;
+        fab.style.cursor = 'grab';
+        document.body.classList.remove('dragging-fab');
+        setTimeout(() => { fab.dataset.dragged = 'false'; }, 300);
+      }
+    });
   })();
 </script>
 </body>
