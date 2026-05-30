@@ -990,7 +990,7 @@
   })();
 
   // ========== DeepSeek AI 聊天 ==========
-  async function callDeepSeek(userMessage, systemPrompt = 'You are a helpful English teaching assistant for grade 5 students.') {
+  async function callDeepSeek(userMessage, systemPrompt = 'You are a helpful English teaching assistant for grade 5 students.Please use simple sentences to response.') {
     const response = await fetch('https://open.bigmodel.cn/api/paas/v4/chat/completions', {
       method: 'POST',
       headers: {
