@@ -5,8 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
   <title>AI Time</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  <!-- 引入 Supabase JS 客户端 -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', cursive, sans-serif; }
     body { background: linear-gradient(145deg, #f6f9fc 0%, #e6f0f5 100%); background-size: cover; background-position: center; background-attachment: fixed; min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 16px; }
@@ -227,7 +226,56 @@
 <script>
   (function(){
     "use strict";
-
+    const API_BASE = 'https://english-backend.40127518.workers.dev '; // 域名
+    
+    // 1. 加载配置
+    async function loadConfigFromCloud(showSuccess = true) {
+      try {
+        const response = await fetch(`${API_BASE}/api/config`);
+        if (!response.ok) throw new Error('Load config failed');
+        const data = await response.json();
+        config = { ...DEFAULT_CONFIG, ...data };
+        normalizeConfig(config);
+        configSource = 'cloud';
+        localStorage.setItem('english_integrated_config', JSON.stringify(config));
+        if (showSuccess) showSnackbar('✅ Load Success');
+        renderCurrentView();
+      } catch (err) {
+        console.warn('Load Failed', err);
+        if (showSuccess) showSnackbar('⚠️ Cloud connect failed, use local cache', true);
+        return false;
+      }
+    }
+    
+    // 2. 发布配置
+    async function publishToCloud() {
+      if (!settingAuthenticated) { showSnackbar('Please access the Settings page first', true); return; }
+      try {
+        const response = await fetch(`${API_BASE}/api/config`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(config)
+        });
+        if (!response.ok) throw new Error('Publish failed');
+        configSource = 'cloud';
+        localStorage.setItem('english_integrated_config', JSON.stringify(config));
+        showSnackbar('🎉 Published succeeded！');
+      } catch (err) {
+        showSnackbar('❌ Publish Failed', true);
+      }
+    }
+    
+    // 3. AI 聊天
+    async function callAI(userMessage) {
+      const response = await fetch(`${API_BASE}/api/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: userMessage })
+      });
+      if (!response.ok) throw new Error(`API error: ${response.status}`);
+      const data = await response.json();
+      return data.reply;
+}
     const SUPABASE_URL = 'https://igsfqnnwuirvhhrczlsw.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlnc2Zxbm53dWlydmhocmN6bHN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3ODA2MDUsImV4cCI6MjA5NTM1NjYwNX0.D1ic8LzNB2zhW21Bp0iscF-MBuztnG6LvICFbbtOXLE';
     const BIN_URL = `${SUPABASE_URL}/rest/v1/config`;
@@ -420,31 +468,35 @@
     }
 
     // ---------- 图片上传/删除工具 ----------
-    async function uploadImageAndReturnUrl(file, fixedFileName) {
-      const { data, error } = await supabase.storage
-        .from('site-assets')
-        .upload(fixedFileName, file, { upsert: true });
-      if (error) {
-        console.error('Upload error:', error);
-        showSnackbar('❌ Image upload failed', true);
-        return null;
-      }
-      const { data: urlData } = supabase.storage
-        .from('site-assets')
-        .getPublicUrl(fixedFileName);
-      return urlData.publicUrl;
+    // 上传图片
+    async function uploadImage(file, fixedFileName) {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = async () => {
+        const base64 = reader.result;
+        const response = await fetch(`${API_BASE}/api/upload-image`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fileBase64: base64, fileName: fixedFileName })
+        });
+        if (response.ok) {
+          const data = await response.json();
+          return data.url; // 返回公开链接
+        } else {
+          showSnackbar('❌ Upload failed', true);
+          return null;
+        }
+      };
     }
-
-    async function deleteImage(fixedFileName) {
-      const { error } = await supabase.storage
-        .from('site-assets')
-        .remove([fixedFileName]);
-      if (error) {
-        console.error('Delete error:', error);
-        showSnackbar('❌ Image delete failed', true);
-        return false;
-      }
-      return true;
+    
+    // 删除图片
+    async function deleteImageFromStorage(fixedFileName) {
+      const response = await fetch(`${API_BASE}/api/delete-image`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileName: fixedFileName })
+      });
+      return response.ok;
     }
 
     // 生成固定文件名（根据字段和可选ID）
