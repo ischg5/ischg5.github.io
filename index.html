@@ -1017,20 +1017,27 @@
       chatWindow.classList.add('hidden');
     });
 
-    async function sendMessage() {
+     async function sendMessage() {
       const text = chatInput.value.trim();
       if (!text) return;
       addMessage('user', text);
       chatInput.value = '';
       try {
-        console.log('Request URL:', API_BASE + '/api/chat');  // ←baocuo
-        const reply = await callAI(text);
-        addMessage('ai', reply);
+        // 直接 fetch Worker，不再依赖 callAI
+        const response = await fetch(`${API_BASE}/api/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: text })
+        });
+        if (!response.ok) throw new Error(`Worker error: ${response.status}`);
+        const data = await response.json();
+        addMessage('ai', data.reply);
       } catch (err) {
-        console.error('Chat error:', err);       // 
+        console.error('Chat error:', err);
         addMessage('ai', '❌ Failed to get response. Please check your API key or network.');
       }
     }
+    
     function addMessage(role, content) {
       const div = document.createElement('div');
       div.className = `msg ${role}`;
