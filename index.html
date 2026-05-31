@@ -1023,6 +1023,7 @@
       addMessage('user', text);
       chatInput.value = '';
       try {
+        console.log('Request URL:', API_BASE + '/api/chat');  // ←baocuo
         const reply = await callAI(text);
         addMessage('ai', reply);
       } catch (err) {
