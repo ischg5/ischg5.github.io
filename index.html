@@ -986,22 +986,17 @@
     }
 
     backButton.onclick = goBack;
-    // 暂时注释掉云端加载，改为直接使用本地配置
-    // cloudRefreshBtn.onclick = () => loadConfigFromCloud(true);
-    cloudRefreshBtn.onclick = () => {
-        showSnackbar('⚠️ Cloud sync temporarily disabled');
-    };
+    cloudRefreshBtn.onclick = () => loadConfigFromCloud(true);
     settingCornerBtn.onclick = enterSetting;
     submitPassword.onclick = () => { if(passwordCallback) passwordCallback(passwordInput.value); };
     cancelPassword.onclick = hidePasswordModal;
     passwordInput.addEventListener('keypress', e => { if(e.key==='Enter') submitPassword.click(); });
 
-    // 直接使用默认配置并保存到本地存储，跳过所有网络请求
-    config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
-    normalizeConfig(config);
-    configSource = 'default';
-    saveConfigToStorage(true);
+    // 启动时尝试加载云端配置，失败则用本地存储，然后显示首页
+    loadConfigFromCloud(true).catch(() => loadConfigFromStorage());
     setView('home');
+
+  })(); // 主逻辑 IIFE 结束
 
   // ========== 浮动机器人聊天（使用 Worker 代理 AI） ==========
   (function initRobotChat() {
