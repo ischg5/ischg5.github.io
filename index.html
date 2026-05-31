@@ -1023,13 +1023,13 @@
       addMessage('user', text);
       chatInput.value = '';
       try {
-        const reply = await callAI(text);   // 现在使用 Worker 代理的 AI 接口
+        const reply = await callAI(text);
         addMessage('ai', reply);
       } catch (err) {
+        console.error('Chat error:', err);       // 
         addMessage('ai', '❌ Failed to get response. Please check your API key or network.');
       }
     }
-
     function addMessage(role, content) {
       const div = document.createElement('div');
       div.className = `msg ${role}`;
